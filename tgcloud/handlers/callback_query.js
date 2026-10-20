@@ -599,15 +599,15 @@ export default async function (query, ctx) {
     } catch {}
 
     try {
-      let ipData = null;
-      if (isIpAddress(target)) {
-        ipData = await lookupIp(target);
-      } else {
-        const resolved = await resolveDomainIp(target);
-        if (resolved) ipData = await lookupIp(resolved);
-      }
+      const ipLookupPromise = isIpAddress(target)
+        ? lookupIp(target)
+        : resolveDomainIp(target).then(ip => (ip ? lookupIp(ip) : null)).catch(() => null);
 
-      const pingResult = await runMultiPingCheck(target);
+      const [ipData, pingResult] = await Promise.all([
+        ipLookupPromise,
+        runMultiPingCheck(target),
+      ]);
+
       const card = formatMultiPingCard(target, pingResult, ipData, userLang);
 
       const keyboard = [

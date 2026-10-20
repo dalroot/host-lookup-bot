@@ -11,6 +11,20 @@ const STANDARD_NODES = [
 ];
 
 /**
+ * Safe sleep in V8 isolates without setTimeout
+ */
+function delay(ms) {
+  try {
+    const sab = new SharedArrayBuffer(4);
+    const int32 = new Int32Array(sab);
+    Atomics.wait(int32, 0, 0, ms);
+  } catch {
+    const start = Date.now();
+    while (Date.now() - start < ms) {}
+  }
+}
+
+/**
  * Fast single-location liveness check via Germany node
  */
 export async function checkLiveness(host) {
@@ -23,7 +37,7 @@ export async function checkLiveness(host) {
     const reqId = data.request_id;
     if (!reqId) return null;
 
-    await new Promise(r => setTimeout(r, 1100));
+    delay(1200);
 
     const pollRes = await fetch(`${BASE_URL}/check-result/${reqId}`, {
       headers: { 'Accept': 'application/json' },
@@ -179,26 +193,18 @@ export function getFlagEmoji(countryCode) {
  * Curated list of high-visibility International & Iranian provincial probe nodes
  */
 export const MULTI_PING_NODES = [
-  // International
-  { id: 'ch1.node.check-host.net', name: 'Switzerland', code: 'ch' },
+  // Global Gateways
   { id: 'de1.node.check-host.net', name: 'Germany', code: 'de' },
-  { id: 'es1.node.check-host.net', name: 'Spain', code: 'es' },
-  { id: 'fr1.node.check-host.net', name: 'France', code: 'fr' },
-  { id: 'uk1.node.check-host.net', name: 'UK', code: 'gb' },
-  { id: 'it1.node.check-host.net', name: 'Italy', code: 'it' },
   { id: 'nl1.node.check-host.net', name: 'Netherlands', code: 'nl' },
-  { id: 'pl1.node.check-host.net', name: 'Poland', code: 'pl' },
-  { id: 'ru1.node.check-host.net', name: 'Russia', code: 'ru' },
-  { id: 'se1.node.check-host.net', name: 'Sweden', code: 'se' },
+  { id: 'uk1.node.check-host.net', name: 'UK', code: 'gb' },
   { id: 'tr1.node.check-host.net', name: 'Turkey', code: 'tr' },
   { id: 'us1.node.check-host.net', name: 'USA', code: 'us' },
-  // Iran Provincial
-  { id: 'ir2.node.check-host.net', name: 'Esfahan', code: 'ir' },
-  { id: 'ir6.node.check-host.net', name: 'Qom', code: 'ir' },
-  { id: 'ir3.node.check-host.net', name: 'Shiraz', code: 'ir' },
+  // Iran Provincial Hubs
   { id: 'ir1.node.check-host.net', name: 'Tehran 1', code: 'ir' },
-  { id: 'ir5.node.check-host.net', name: 'Tehran 2', code: 'ir' },
-  { id: 'ir7.node.check-host.net', name: 'Tehran 3', code: 'ir' },
+  { id: 'ir7.node.check-host.net', name: 'Tehran 2', code: 'ir' },
+  { id: 'ir2.node.check-host.net', name: 'Esfahan', code: 'ir' },
+  { id: 'ir3.node.check-host.net', name: 'Shiraz', code: 'ir' },
+  { id: 'ir6.node.check-host.net', name: 'Qom', code: 'ir' },
 ];
 
 /**
@@ -239,8 +245,8 @@ export async function runMultiPingCheck(host) {
 
     const reqId = initData.request_id;
 
-    // Wait 3.5 seconds for ICMP ping probes to complete across nodes
-    await new Promise(r => setTimeout(r, 3500));
+    // Fast delay for ICMP probes to finish across curated fast nodes
+    delay(1800);
 
     const pollRes = await fetch(`${BASE_URL}/check-result/${reqId}`, {
       headers: { 'Accept': 'application/json' },

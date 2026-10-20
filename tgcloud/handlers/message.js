@@ -1,4 +1,6 @@
-import { api, db } from 'sdk';
+import * as allSdk from 'sdk';
+const { api, db } = allSdk;
+console.error('ALL_SDK_EXPORTS:', Object.keys(allSdk));
 import { sql } from 'sdk/db';
 import { users, fsubChannels } from '../schema.js';
 import {
@@ -70,6 +72,7 @@ export default async function (message, ctx) {
       console.error('Error saving user:', err);
     }
   }
+
 
   // ==========================================
   // 2. ADMIN INTERACTIVE CONVERSATION & COMMANDS
@@ -673,52 +676,52 @@ export default async function (message, ctx) {
       ...replyParams,
     });
 
-    let ipData = null;
-    if (isIpAddress(target)) {
-      ipData = await lookupIp(target);
-    } else {
-      const resolved = await resolveDomainIp(target);
-      if (resolved) {
-        ipData = await lookupIp(resolved);
+    try {
+      const ipLookupPromise = isIpAddress(target)
+        ? lookupIp(target)
+        : resolveDomainIp(target).then(ip => (ip ? lookupIp(ip) : null)).catch(() => null);
+
+      const [ipData, pingResult] = await Promise.all([
+        ipLookupPromise,
+        runMultiPingCheck(target),
+      ]);
+
+      const card = formatMultiPingCard(target, pingResult, ipData, userLang);
+
+      const keyboard = [
+        [
+          { text: isFa ? '🔄 تست مجدد (Re-Ping)' : '🔄 Re-Ping', callback_data: `wping_${target}` },
+          { text: isFa ? '📋 جزئیات هویز' : '📋 WHOIS Details', callback_data: `wboth_${target}` },
+        ],
+        [
+          { text: isFa ? '📡 رکوردهای DNS' : '📡 DNS Records', callback_data: `wdns_${target}` },
+          { text: isFa ? '🔍 استعلام جدید' : '🔍 New Lookup', switch_inline_query_current_chat: '' },
+        ],
+        [
+          { text: isFa ? '🏠 منوی اصلی' : '🏠 Main Menu', callback_data: 'menu_main' },
+          { text: '🔗 Check-Host Web Report ↗️', url: `https://check-host.net/check-report?host=${encodeURIComponent(target)}` },
+        ],
+      ];
+
+      if (loadingMsg && loadingMsg.message_id) {
+        return await api.editMessageText({
+          chat_id: chatId,
+          message_id: loadingMsg.message_id,
+          text: card,
+          parse_mode: 'HTML',
+          disable_web_page_preview: true,
+          reply_markup: { inline_keyboard: keyboard },
+        });
       }
-    }
-
-    const pingResult = await runMultiPingCheck(target);
-    const card = formatMultiPingCard(target, pingResult, ipData, userLang);
-
-    const keyboard = [
-      [
-        { text: isFa ? '🔄 تست مجدد (Re-Ping)' : '🔄 Re-Ping', callback_data: `wping_${target}` },
-        { text: isFa ? '📋 جزئیات هویز' : '📋 WHOIS Details', callback_data: `wboth_${target}` },
-      ],
-      [
-        { text: isFa ? '📡 رکوردهای DNS' : '📡 DNS Records', callback_data: `wdns_${target}` },
-        { text: isFa ? '🔍 استعلام جدید' : '🔍 New Lookup', switch_inline_query_current_chat: '' },
-      ],
-      [
-        { text: isFa ? '🏠 منوی اصلی' : '🏠 Main Menu', callback_data: 'menu_main' },
-        { text: '🔗 Check-Host Web Report ↗️', url: `https://check-host.net/check-report?host=${encodeURIComponent(target)}` },
-      ],
-    ];
-
-    if (loadingMsg && loadingMsg.message_id) {
-      return api.editMessageText({
-        chat_id: chatId,
-        message_id: loadingMsg.message_id,
-        text: card,
-        parse_mode: 'HTML',
-        disable_web_page_preview: true,
-        reply_markup: { inline_keyboard: keyboard },
-      });
-    } else {
-      return api.sendMessage({
-        chat_id: chatId,
-        text: card,
-        parse_mode: 'HTML',
-        disable_web_page_preview: true,
-        ...replyParams,
-        reply_markup: { inline_keyboard: keyboard },
-      });
+    } catch (err) {
+      console.error('PING_ERROR_CAUGHT:', err.stack || err.message);
+      if (loadingMsg && loadingMsg.message_id) {
+        return await api.editMessageText({
+          chat_id: chatId,
+          message_id: loadingMsg.message_id,
+          text: `⚠️ Error during ping: ${err.message}`,
+        });
+      }
     }
   }
 
