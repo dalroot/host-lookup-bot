@@ -1,0 +1,42 @@
+GNU AFFERO GENERAL PUBLIC LICENSE
+Version 3, 19 November 2007
+
+Copyright (C) 2026 Dall Network & Contributors (https://github.com/dalroot)
+
+Everyone is permitted to copy and distribute verbatim copies
+of this license document, but changing it is not allowed.
+
+==============================================================================
+SPECIAL ATTRIBUTION & NON-COMMERCIAL CONDITIONS (ADDENDUM)
+==============================================================================
+
+Permission is granted under the GNU Affero General Public License Version 3 (AGPLv3),
+with the following explicit and binding conditions:
+
+1. MANDATORY ATTRIBUTION:
+   Any redistribution, deployment, fork, or derivative work based on this software
+   or its components MUST prominently display the original attribution to:
+   "Original Project: Host Lookup Bot by Dall (@dalroot / @dallrep)"
+   with a clickable hyperlink to the upstream repository (https://github.com/dalroot/host-lookup-bot).
+   This credit must appear in:
+   a) The user-facing documentation / README.
+   b) The bot's /start and /help command output.
+
+2. PROHIBITION OF RE-BRANDING & COMMERCIAL RESALE:
+   a) This software is provided free and open-source for public and personal use.
+   b) No individual or entity is permitted to remove the original copyright notices,
+      re-brand the service as a closed proprietary product, or sell access to this
+      software, its source code, or hosted instances for commercial profit.
+   c) Any commercial utilization or white-label distribution requires prior express
+      written consent from the original copyright holder (dalroot).
+
+==============================================================================
+TERMS AND CONDITIONS (AGPLv3 CORE)
+==============================================================================
+
+0. Definitions.
+   "This License" refers to version 3 of the GNU Affero General Public License.
+   "The Program" refers to any copyrightable work licensed under this License.
+   ... [Standard AGPLv3 Core Terms Apply in Full] ...
+
+Refer to https://www.gnu.org/licenses/agpl-3.0.html for the complete unabridged AGPLv3 legal text.

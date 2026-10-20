@@ -1,0 +1,38 @@
+{
+  "name": "host-lookup-bot",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "⚡ Serverless Network Intelligence, WHOIS (RDAP), DNS & Host Lookup Bot running 100% on Telegram Cloud Apps (V8 Isolates).",
+  "homepage": "https://github.com/dalroot/host-lookup-bot",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dalroot/host-lookup-bot.git"
+  },
+  "bugs": {
+    "url": "https://github.com/dalroot/host-lookup-bot/issues"
+  },
+  "keywords": [
+    "telegram-bot",
+    "serverless",
+    "whois",
+    "rdap",
+    "dns-lookup",
+    "cloudflare-doh",
+    "host-lookup",
+    "ip-geolocation",
+    "telegram-cloud-apps",
+    "sqlite",
+    "check-host",
+    "network-tools"
+  ],
+  "author": "Dal (https://github.com/dalroot)",
+  "license": "GPL-3.0",
+  "scripts": {
+    "deploy": "tgcloud push",
+    "status": "tgcloud status",
+    "migrate": "tgcloud migrate"
+  },
+  "devDependencies": {
+    "@tgcloud/cli": "^0.2.0"
+  }
+}
