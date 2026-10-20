@@ -459,37 +459,45 @@ export default async function (message, ctx) {
     // Register commands for all users and language scopes
     const cmdList = [
       { command: 'start', description: '🚀 Main menu & bot introduction' },
+      { command: 'ping', description: '⚡ Multi-node global & Iran latency matrix' },
+      { command: 'check', description: '🔍 Quick server & host latency probe' },
       { command: 'whois', description: '🌐 Domain & IP WHOIS lookup' },
       { command: 'ip', description: '🖥️ IP intelligence, ASN & datacenter' },
       { command: 'dns', description: '📡 Query DNS records (A, AAAA, MX, NS...)' },
-      { command: 'ping', description: '⚡ Multi-node global & Iran latency matrix' },
       { command: 'language', description: '🌐 Change language / تغییر زبان' },
       { command: 'help', description: 'ℹ️ Complete user manual & instructions' },
     ];
     const cmdListFa = [
       { command: 'start', description: '🚀 منوی اصلی و راهنما' },
+      { command: 'ping', description: '⚡ تست پینگ ۱۸ نقطه‌ای جهانی و استانی' },
+      { command: 'check', description: '🔍 بررسی سریع پینگ و تاخیر سرور' },
       { command: 'whois', description: '🌐 استعلام هویز دامنه و آی‌پی' },
       { command: 'ip', description: '🖥️ اطلاعات آی‌پی، لوکیشن و دیتاسنتر' },
       { command: 'dns', description: '📡 استعلام رکوردهای DNS' },
-      { command: 'ping', description: '⚡ تست پینگ چندنقطه‌ای جهانی و استانی' },
       { command: 'language', description: '🌐 تنظیم زبان / Change Language' },
       { command: 'help', description: 'ℹ️ راهنمای کامل استفاده' },
     ];
     const adminCmdList = [
       { command: 'start', description: '🚀 Main menu' },
+      { command: 'ping', description: '⚡ Multi-node ping matrix' },
+      { command: 'check', description: '🔍 Check host latency' },
+      { command: 'whois', description: '🌐 Domain & IP WHOIS lookup' },
+      { command: 'ip', description: '🖥️ IP intelligence & ASN' },
+      { command: 'dns', description: '📡 Query DNS records' },
       { command: 'admin', description: '⚙️ Open Admin Dashboard' },
       { command: 'channels', description: '📢 Manage Force-Join Channels' },
       { command: 'users', description: '👥 View registered users' },
-      { command: 'ping', description: '⚡ Multi-node ping matrix' },
       { command: 'language', description: '🌐 Change language' },
       { command: 'help', description: 'ℹ️ Help & manual' },
     ];
 
-    api.setMyCommands({ commands: cmdList }).catch(() => {});
-    api.setMyCommands({ commands: cmdList, language_code: 'en' }).catch(() => {});
-    api.setMyCommands({ commands: cmdListFa, language_code: 'fa' }).catch(() => {});
-    api.setMyCommands({ commands: adminCmdList, scope: { type: 'chat', chat_id: ADMIN_ID } }).catch(() => {});
-    api.setChatMenuButton({ menu_button: { type: 'commands' } }).catch(() => {});
+    await Promise.all([
+      api.setMyCommands({ commands: cmdList }).catch(() => {}),
+      api.setMyCommands({ commands: cmdList, language_code: 'en' }).catch(() => {}),
+      api.setMyCommands({ commands: cmdListFa, language_code: 'fa' }).catch(() => {}),
+      api.setMyCommands({ commands: adminCmdList, scope: { type: 'chat', chat_id: ADMIN_ID } }).catch(() => {}),
+      api.setChatMenuButton({ menu_button: { type: 'commands' } }).catch(() => {}),
+    ]);
 
     const userLang = await getUserLang(db, fromUser?.id);
     const isFa = userLang === 'fa';
