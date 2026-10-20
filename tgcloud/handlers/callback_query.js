@@ -37,9 +37,26 @@ export const ADMIN_ID = 8629398713;
 
 export default async function (query, ctx) {
   const data = query.data || '';
-  const chatId = query.message.chat.id;
-  const messageId = query.message.message_id;
+  const chatId = query.message?.chat?.id;
+  const messageId = query.message?.message_id;
+  const inlineMessageId = query.inline_message_id;
   const fromUserId = query.from?.id;
+
+  const editMessage = async (params) => {
+    if (inlineMessageId) {
+      const { chat_id, message_id, ...rest } = params;
+      return api.editMessageText({
+        inline_message_id: inlineMessageId,
+        ...rest,
+      });
+    } else {
+      return api.editMessageText({
+        chat_id: chatId,
+        message_id: messageId,
+        ...params,
+      });
+    }
+  };
 
   // Fast acknowledge for normal buttons (if not handled specifically)
   if (!data.startsWith('wping_') && !data.startsWith('admin_bc_send_')) {
@@ -587,9 +604,7 @@ export default async function (query, ctx) {
 
     // Show loading state in-place
     try {
-      await api.editMessageText({
-        chat_id: chatId,
-        message_id: messageId,
+      await editMessage({
         text: isFa
           ? `⏳ <i>در حال ارسال پکت‌های پینگ و سنجش تاخیر از ۱۸ نقطه جهان و ایران برای</i> <code>${escapeHtml(target)}</code><i>...\n(لطفاً چند ثانیه صبر کنید)</i>`
           : `⏳ <i>Measuring ICMP latency across 18 global & Iran provincial nodes for</i> <code>${escapeHtml(target)}</code><i>...\n(please wait ~3 seconds)</i>`,
@@ -631,9 +646,7 @@ export default async function (query, ctx) {
         ],
       ];
 
-      return await api.editMessageText({
-        chat_id: chatId,
-        message_id: messageId,
+      return await editMessage({
         text: card,
         parse_mode: 'HTML',
         disable_web_page_preview: true,
@@ -674,9 +687,7 @@ export default async function (query, ctx) {
     ];
 
     try {
-      return await api.editMessageText({
-        chat_id: chatId,
-        message_id: messageId,
+      return await editMessage({
         text: card,
         parse_mode: 'HTML',
         disable_web_page_preview: true,
@@ -709,9 +720,7 @@ export default async function (query, ctx) {
     ];
 
     try {
-      return await api.editMessageText({
-        chat_id: chatId,
-        message_id: messageId,
+      return await editMessage({
         text: card,
         parse_mode: 'HTML',
         disable_web_page_preview: true,
@@ -743,9 +752,7 @@ export default async function (query, ctx) {
     ];
 
     try {
-      return await api.editMessageText({
-        chat_id: chatId,
-        message_id: messageId,
+      return await editMessage({
         text: card,
         parse_mode: 'HTML',
         disable_web_page_preview: true,
