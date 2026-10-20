@@ -637,9 +637,9 @@ export default async function (message, ctx) {
     });
   }
 
-  // 6.5. Multi-Node Ping Command: /ping <target>
-  if (rawText.startsWith('/ping')) {
-    const targetArg = cleanRawInput(rawText.replace(/^\/ping(?:@[a-zA-Z0-9_]+)?\s*/i, ''));
+  // 6.5. Multi-Node Ping Command: /ping <target>, /check <target>, or check! <target>
+  if (rawText.startsWith('/ping') || rawText.startsWith('/check') || /^check!\s*/i.test(rawText)) {
+    const targetArg = cleanRawInput(rawText.replace(/^(?:\/ping|\/check|check!)(?:@[a-zA-Z0-9_]+)?\s*/i, ''));
     const userLang = await getUserLang(db, fromUser?.id);
     const isFa = userLang === 'fa';
 
@@ -649,10 +649,10 @@ export default async function (message, ctx) {
         text: isFa
           ? `<blockquote>📡 <b>تست پینگ چندنقطه‌ای (Multi-Node Ping)</b></blockquote>\n\n` +
             `لطفاً نام دامنه یا آی‌پی مورد نظر را وارد نمایید (مثال: <code>google.com</code> یا <code>1.1.1.1</code>):\n\n` +
-            `<i>یا دستور را به این شکل بفرستید: <code>/ping google.com</code></i>`
+            `<i>یا دستور را به این شکل بفرستید: <code>/ping google.com</code> یا <code>check! 8.8.8.8</code></i>`
           : `<blockquote>📡 <b>Multi-Node Ping & Latency Matrix</b></blockquote>\n\n` +
             `Please provide a domain or IP address to ping (e.g. <code>google.com</code> or <code>1.1.1.1</code>):\n\n` +
-            `<i>Example: <code>/ping 1.1.1.1</code></i>`,
+            `<i>Example: <code>/ping 1.1.1.1</code> or <code>check! 8.8.8.8</code></i>`,
         parse_mode: 'HTML',
         ...replyParams,
         reply_markup: {
@@ -669,8 +669,8 @@ export default async function (message, ctx) {
     const loadingMsg = await api.sendMessage({
       chat_id: chatId,
       text: isFa
-        ? `⏳ <i>در حال ارسال پکت‌های پینگ و سنجش تاخیر از ۱۸ نقطه جهان و استان‌های ایران برای</i> <code>${escapeHtml(target)}</code><i>...\n(لطفاً چند ثانیه صبر کنید)</i>`
-        : `⏳ <i>Measuring ICMP latency across 18 global & Iran provincial nodes for</i> <code>${escapeHtml(target)}</code><i>...\n(please wait ~3.5 seconds)</i>`,
+        ? `⏳ <i>در حال ارسال پکت‌های پینگ و سنجش تاخیر از ۱۸ نقطه جهان و ایران برای</i> <code>${escapeHtml(target)}</code><i>...\n(لطفاً چند ثانیه صبر کنید)</i>`
+        : `⏳ <i>Measuring ICMP latency across 18 global & Iran provincial nodes for</i> <code>${escapeHtml(target)}</code><i>...\n(please wait ~3 seconds)</i>`,
       parse_mode: 'HTML',
       ...replyParams,
     });
@@ -685,19 +685,19 @@ export default async function (message, ctx) {
         runMultiPingCheck(target),
       ]);
 
-      const card = formatMultiPingCard(target, pingResult, ipData, userLang);
+      const card = formatMultiPingCard(target, pingResult, ipData, userLang, { expandable: false });
 
       const keyboard = [
         [
-          { text: isFa ? '🔄 تست مجدد (Re-Ping)' : '🔄 Re-Ping', callback_data: `wping_${target}` },
+          { text: isFa ? '📂 نمایش کلاپس (Quote)' : '📂 Collapse View (Quote)', callback_data: `wping_exp_${target}` },
+          { text: isFa ? '🔄 تست مجدد' : '🔄 Re-Ping', callback_data: `wping_${target}` },
+        ],
+        [
           { text: isFa ? '📋 جزئیات هویز' : '📋 WHOIS Details', callback_data: `wboth_${target}` },
-        ],
-        [
           { text: isFa ? '📡 رکوردهای DNS' : '📡 DNS Records', callback_data: `wdns_${target}` },
-          { text: isFa ? '🔍 استعلام جدید' : '🔍 New Lookup', switch_inline_query_current_chat: '' },
         ],
         [
-          { text: isFa ? '🏠 منوی اصلی' : '🏠 Main Menu', callback_data: 'menu_main' },
+          { text: isFa ? '🔍 استعلام جدید' : '🔍 New Lookup', switch_inline_query_current_chat: '' },
           { text: '🔗 Check-Host Web Report ↗️', url: `https://check-host.net/check-report?host=${encodeURIComponent(target)}` },
         ],
       ];

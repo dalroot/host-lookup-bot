@@ -187,19 +187,32 @@ export function getFlagEmoji(countryCode) {
 /**
  * Curated list of high-visibility International & Iranian provincial probe nodes
  */
+/**
+ * 18 High-Visibility Global & Regional Probe Nodes matching standard latency matrix
+ */
 export const MULTI_PING_NODES = [
-  // Global Gateways
+  // Europe & Global
+  { id: 'ch1.node.check-host.net', name: 'Switzerland', code: 'ch' },
   { id: 'de1.node.check-host.net', name: 'Germany', code: 'de' },
-  { id: 'nl1.node.check-host.net', name: 'Netherlands', code: 'nl' },
+  { id: 'es1.node.check-host.net', name: 'Spain', code: 'es' },
+  { id: 'fr2.node.check-host.net', name: 'France', code: 'fr' },
   { id: 'uk1.node.check-host.net', name: 'UK', code: 'gb' },
+  // Iran Provincial Hubs
+  { id: 'ir2.node.check-host.net', name: 'Esfahan', code: 'ir' },
+  { id: 'ir6.node.check-host.net', name: 'Karaj', code: 'ir' },
+  { id: 'ir5.node.check-host.net', name: 'Mashhad', code: 'ir' },
+  { id: 'ir4.node.check-host.net', name: 'Qom', code: 'ir' },
+  { id: 'ir3.node.check-host.net', name: 'Shiraz', code: 'ir' },
+  { id: 'ir7.node.check-host.net', name: 'Tabriz', code: 'ir' },
+  { id: 'ir1.node.check-host.net', name: 'Tehran 1', code: 'ir' },
+  // International Hubs
+  { id: 'it2.node.check-host.net', name: 'Italy', code: 'it' },
+  { id: 'nl1.node.check-host.net', name: 'Netherlands', code: 'nl' },
+  { id: 'pl2.node.check-host.net', name: 'Poland', code: 'pl' },
+  { id: 'ru1.node.check-host.net', name: 'Russia', code: 'ru' },
+  { id: 'se1.node.check-host.net', name: 'Sweden', code: 'se' },
   { id: 'tr1.node.check-host.net', name: 'Turkey', code: 'tr' },
   { id: 'us1.node.check-host.net', name: 'USA', code: 'us' },
-  // Iran Provincial Hubs
-  { id: 'ir1.node.check-host.net', name: 'Tehran 1', code: 'ir' },
-  { id: 'ir7.node.check-host.net', name: 'Tehran 2', code: 'ir' },
-  { id: 'ir2.node.check-host.net', name: 'Esfahan', code: 'ir' },
-  { id: 'ir3.node.check-host.net', name: 'Shiraz', code: 'ir' },
-  { id: 'ir6.node.check-host.net', name: 'Qom', code: 'ir' },
 ];
 
 /**
@@ -257,38 +270,40 @@ export async function runMultiPingCheck(host) {
 
 /**
  * Format Multi-Node Ping Matrix Card
+ * @param {string} target 
+ * @param {object} pingResult 
+ * @param {object} ipData 
+ * @param {string} lang 
+ * @param {object} options - { expandable: boolean }
  */
-export function formatMultiPingCard(target, pingResult, ipData = null, lang = 'en') {
+export function formatMultiPingCard(target, pingResult, ipData = null, lang = 'en', options = {}) {
   const isFa = lang === 'fa';
   const cleanEscaped = String(target || '')
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;');
 
-  let text = isFa
-    ? `<blockquote>📡 <b>تست پینگ چندنقطه‌ای و لایونس (Multi-Node Ping)</b></blockquote>\n\n`
-    : `<blockquote>📡 <b>Multi-Node Ping & Latency Matrix</b></blockquote>\n\n`;
-
+  let text = '';
   text += `📬 <b>Address:</b> <code>${cleanEscaped}</code>\n`;
 
   if (ipData) {
     const esc = (s) => String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-    if (ipData.ip && ipData.ip !== target) {
-      text += `🌐 <b>IP:</b> <code>${esc(ipData.ip)}</code>\n`;
+    if (ipData.query || ipData.ip) {
+      text += `🌐 <b>IP:</b> <code>${esc(ipData.query || ipData.ip)}</code>\n`;
     }
     if (ipData.country) {
-      const cFlag = ipData.countryCode ? getFlagEmoji(ipData.countryCode) : '';
-      text += `🏳️ <b>Country:</b> ${esc(ipData.country)} ${cFlag}\n`;
+      text += `🏳️ <b>Country:</b> ${esc(ipData.country)}\n`;
     }
-    if (ipData.region) {
-      text += `📍 <b>Region:</b> ${esc(ipData.region)}\n`;
+    if (ipData.regionName || ipData.region) {
+      text += `📍 <b>Region:</b> ${esc(ipData.regionName || ipData.region)}\n`;
     }
     if (ipData.city) {
       text += `🏙️ <b>City:</b> ${esc(ipData.city)}\n`;
     }
-    if (ipData.asn) {
-      const orgStr = ipData.org ? ` (${esc(ipData.org)})` : '';
-      text += `🏢 <b>ASN:</b> <code>AS${esc(ipData.asn)}</code>${orgStr}\n`;
+    const asnVal = ipData.as || (ipData.asn ? `AS${ipData.asn}` : '');
+    if (asnVal) {
+      const match = asnVal.match(/^AS\d+/i);
+      text += `🏢 <b>ASN:</b> <code>${esc(match ? match[0] : asnVal)}</code>\n`;
     }
   }
 
@@ -303,8 +318,8 @@ export function formatMultiPingCard(target, pingResult, ipData = null, lang = 'e
   if (!pingResult || pingResult.error || !pingResult.results) {
     if (pingResult?.error === 'limit_exceeded') {
       text += isFa
-        ? `<blockquote>⚠️ <b>محدودیت نرخ استعلام Check-Host برای این هدف</b>\n\nاین هدف در حال حاضر بیش از حد مجاز در سرورهای جهانی تست شده و در کول‌داون موقت (۳۰ ثانیه‌ای) قرار دارد.\n💡 <i>لطفاً چند ثانیه دیگر امتحان کنید یا دامنه/آی‌پی دیگری (مانند <code>8.8.8.8</code> یا <code>google.com</code>) را تست نمایید.</i></blockquote>`
-        : `<blockquote>⚠️ <b>Check-Host Rate Limit Exceeded for this Target</b>\n\nThis target is heavily tested on Check-Host and is on temporary cooldown (~30s).\n💡 <i>Please retry in a moment or test another target (e.g. <code>8.8.8.8</code> or <code>google.com</code>).</i></blockquote>`;
+        ? `<blockquote>⚠️ <b>محدودیت نرخ استعلام Check-Host برای این هدف</b>\n\nاین هدف در حال حاضر بیش از حد مجاز در سرورهای جهانی تست شده و در کول‌داون موقت (۳۰ ثانیه‌ای) قرار دارد.\n💡 <i>لطفاً چند ثانیه دیگر امتحان کنید یا دامنه/آی‌پی دیگری را تست نمایید.</i></blockquote>`
+        : `<blockquote>⚠️ <b>Check-Host Rate Limit Exceeded for this Target</b>\n\nThis target is heavily tested on Check-Host and is on temporary cooldown (~30s).\n💡 <i>Please retry in a moment or test another target.</i></blockquote>`;
     } else {
       text += `<blockquote>⚠️ <i>${isFa ? 'خطا در دریافت نتایج پینگ از سرورهای Check-Host.' : 'Failed to retrieve ping results from Check-Host.'}</i></blockquote>`;
     }
@@ -320,7 +335,7 @@ export function formatMultiPingCard(target, pingResult, ipData = null, lang = 'e
     const label = `${flag} ${node.name}`;
 
     if (!rawData || !Array.isArray(rawData) || !Array.isArray(rawData[0])) {
-      lines.push(`${label.padEnd(18)} ✘ Timeout`);
+      lines.push(`${label} ✘ Timeout`);
       continue;
     }
 
@@ -329,15 +344,22 @@ export function formatMultiPingCard(target, pingResult, ipData = null, lang = 'e
     const marks = packets.map(p => (Array.isArray(p) && p[0] === 'OK') ? '✓' : '✘').join(' ');
 
     if (okPackets.length === 0) {
-      lines.push(`${label.padEnd(18)} ✘ Timeout`);
+      lines.push(`${label} ✘ Timeout`);
     } else {
       const avgSec = okPackets.reduce((sum, p) => sum + p[1], 0) / okPackets.length;
       const ms = (avgSec * 1000).toFixed(1);
-      lines.push(`${label.padEnd(18)} ➤ ${ms.padStart(5)} ms [${marks}]`);
+      lines.push(`${label} ➤ ${ms} ms [${marks}]`);
     }
   }
 
-  text += `<pre>\n${lines.join('\n')}\n</pre>\n\n`;
+  const pingBlock = lines.join('\n');
+
+  if (options.expandable) {
+    text += `<blockquote expandable>${pingBlock}</blockquote>\n\n`;
+  } else {
+    text += `${pingBlock}\n\n`;
+  }
+
   text += isFa
     ? `<i>💡 [✓ ✓ ✓ ✓] نشان‌دهنده ۴ بسته ارسالی ICMP و زمان پاسخ‌دهی به میلی‌ثانیه است.</i>`
     : `<i>💡 [✓ ✓ ✓ ✓] denotes 4 ICMP probe packets & round-trip latency in ms.</i>`;

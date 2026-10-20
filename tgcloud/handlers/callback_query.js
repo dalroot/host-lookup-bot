@@ -574,7 +574,8 @@ export default async function (query, ctx) {
   // 3. MULTI-NODE PING CHECK (GLOBAL + IRAN)
   // ==========================================
   if (data.startsWith('wping_')) {
-    const target = cleanHost(data.replace('wping_', ''));
+    const isExpandable = data.startsWith('wping_exp_');
+    const target = cleanHost(data.replace(/^wping_(?:exp_)?/, ''));
     const userLang = await getUserLang(db, fromUserId);
     const isFa = userLang === 'fa';
 
@@ -590,10 +591,8 @@ export default async function (query, ctx) {
         chat_id: chatId,
         message_id: messageId,
         text: isFa
-          ? `<blockquote>📡 <b>تست پینگ چندنقطه‌ای و لایونس (Multi-Node Ping)</b></blockquote>\n\n` +
-            `⏳ <i>در حال ارسال پکت‌های پینگ و سنجش تاخیر از ۱۸ نقطه جهان و استان‌های ایران برای</i> <code>${escapeHtml(target)}</code><i>...\n(لطفاً چند ثانیه صبر کنید)</i>`
-          : `<blockquote>📡 <b>Multi-Node Ping & Latency Matrix</b></blockquote>\n\n` +
-            `⏳ <i>Measuring ICMP latency across 18 global & Iran provincial nodes for</i> <code>${escapeHtml(target)}</code><i>...\n(please wait ~3.5 seconds)</i>`,
+          ? `⏳ <i>در حال ارسال پکت‌های پینگ و سنجش تاخیر از ۱۸ نقطه جهان و ایران برای</i> <code>${escapeHtml(target)}</code><i>...\n(لطفاً چند ثانیه صبر کنید)</i>`
+          : `⏳ <i>Measuring ICMP latency across 18 global & Iran provincial nodes for</i> <code>${escapeHtml(target)}</code><i>...\n(please wait ~3 seconds)</i>`,
         parse_mode: 'HTML',
       });
     } catch {}
@@ -608,19 +607,23 @@ export default async function (query, ctx) {
         runMultiPingCheck(target),
       ]);
 
-      const card = formatMultiPingCard(target, pingResult, ipData, userLang);
+      const card = formatMultiPingCard(target, pingResult, ipData, userLang, { expandable: isExpandable });
+
+      const toggleBtn = isExpandable
+        ? { text: isFa ? '📖 نمایش باز (عادی)' : '📖 Normal View', callback_data: `wping_${target}` }
+        : { text: isFa ? '📂 نمایش کلاپس (Quote)' : '📂 Collapse View (Quote)', callback_data: `wping_exp_${target}` };
 
       const keyboard = [
         [
-          { text: isFa ? '🔄 تست مجدد (Re-Ping)' : '🔄 Re-Ping', callback_data: `wping_${target}` },
+          toggleBtn,
+          { text: isFa ? '🔄 تست مجدد' : '🔄 Re-Ping', callback_data: isExpandable ? `wping_exp_${target}` : `wping_${target}` },
+        ],
+        [
           { text: isFa ? '📋 جزئیات هویز' : '📋 WHOIS Details', callback_data: `wboth_${target}` },
-        ],
-        [
           { text: isFa ? '📡 رکوردهای DNS' : '📡 DNS Records', callback_data: `wdns_${target}` },
-          { text: isFa ? '🔍 استعلام جدید' : '🔍 New Lookup', switch_inline_query_current_chat: '' },
         ],
         [
-          { text: isFa ? '🏠 منوی اصلی' : '🏠 Main Menu', callback_data: 'menu_main' },
+          { text: isFa ? '🔍 استعلام جدید' : '🔍 New Lookup', switch_inline_query_current_chat: '' },
           { text: '🔗 Check-Host Web Report ↗️', url: `https://check-host.net/check-report?host=${encodeURIComponent(target)}` },
         ],
       ];
