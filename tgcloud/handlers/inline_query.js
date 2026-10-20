@@ -10,6 +10,30 @@ import {
   formatUnifiedCard,
 } from '../lib/whois.js';
 
+function createPingArticle(target, ipData = null) {
+  const loc = ipData?.country ? ` (${ipData.country})` : '';
+  return {
+    type: 'article',
+    id: `ping_${target}`,
+    title: `📡 Multi-Node Ping: ${target}${loc}`,
+    description: `18-node ICMP latency check across Global & Iran hubs`,
+    input_message_content: {
+      message_text:
+        `<blockquote>📡 <b>Multi-Node Ping & Latency Matrix</b></blockquote>\n\n` +
+        `Target: <code>${target}</code>${loc ? `\nLocation: <b>${ipData.country}</b>` : ''}\n\n` +
+        `<i>Click below to launch 18-node ICMP probe across global & Iran gateways:</i>`,
+      parse_mode: 'HTML',
+    },
+    reply_markup: {
+      inline_keyboard: [
+        [{ text: '⚡️ Measure 18-Node Latency', callback_data: `wping_${target}` }],
+        [{ text: '🔍 New Lookup', switch_inline_query_current_chat: '' }],
+        [{ text: '🔗 Check-Host Report ↗️', url: `https://check-host.net/check-report?host=${encodeURIComponent(target)}` }],
+      ],
+    },
+  };
+}
+
 export default async function (inlineQuery, ctx) {
   const queryId = inlineQuery.id;
   const rawQuery = (inlineQuery.query || '').trim();
@@ -22,7 +46,7 @@ export default async function (inlineQuery, ctx) {
           type: 'article',
           id: 'help',
           title: '🔍 Host Lookup — Enter Domain or IP',
-          description: 'Example: @HostLookupBot google.com or @HostLookupBot 1.1.1.1',
+          description: 'Example: @HostLookupBot google.com or @HostLookupBot ping 1.1.1.1',
           input_message_content: {
             message_text:
               `<blockquote>🔍 <b>Host Lookup — Fast WHOIS & Server Inspector</b></blockquote>\n\n` +
@@ -35,7 +59,9 @@ export default async function (inlineQuery, ctx) {
     });
   }
 
-  const clean = cleanHost(rawQuery);
+  const isPingIntent = /^(?:\/ping|\/check|check!|ping)\s*/i.test(rawQuery);
+  const targetRaw = rawQuery.replace(/^(?:\/ping|\/check|check!|ping)\s*/i, '').trim();
+  const clean = cleanHost(targetRaw || rawQuery);
 
   // 1. IP Lookup
   if (isIpAddress(clean)) {
@@ -44,33 +70,37 @@ export default async function (inlineQuery, ctx) {
     const title = ipData.country ? `IP: ${clean} (${ipData.country})` : `IP: ${clean}`;
     const desc = ipData.org || ipData.isp || 'Inspect IP geolocation & ASN';
 
+    const ipArticle = {
+      type: 'article',
+      id: `ip_${clean}`,
+      title: `🖥️ ${title}`,
+      description: desc,
+      input_message_content: {
+        message_text: card,
+        parse_mode: 'HTML',
+        disable_web_page_preview: true,
+      },
+      reply_markup: {
+        inline_keyboard: [
+          [
+            { text: '⚡️ Ping Check', callback_data: `wping_${clean}` },
+            { text: '🔍 New Lookup', switch_inline_query_current_chat: '' },
+          ],
+          [
+            { text: '🏠 Main Menu', url: 'https://t.me/HostLookupBot?start=main' },
+            { text: '🔗 Check-Host Report ↗️', url: `https://check-host.net/ip-info?host=${encodeURIComponent(clean)}` },
+          ],
+        ],
+      },
+    };
+
+    const pingArticle = createPingArticle(clean, ipData);
+    const results = isPingIntent ? [pingArticle, ipArticle] : [ipArticle, pingArticle];
+
     return api.answerInlineQuery({
       inline_query_id: queryId,
-      results: [
-        {
-          type: 'article',
-          id: `ip_${clean}`,
-          title: `🖥️ ${title}`,
-          description: desc,
-          input_message_content: {
-            message_text: card,
-            parse_mode: 'HTML',
-            disable_web_page_preview: true,
-          },
-          reply_markup: {
-            inline_keyboard: [
-              [
-                { text: '🔍 New Lookup', switch_inline_query_current_chat: '' },
-                { text: '🏠 Main Menu', url: 'https://t.me/HostLookupBot?start=main' },
-              ],
-              [
-                { text: '🔗 Check-Host Report ↗️', url: `https://check-host.net/ip-info?host=${encodeURIComponent(clean)}` },
-              ],
-            ],
-          },
-        },
-      ],
-      cache_time: 60,
+      results,
+      cache_time: 30,
     });
   }
 
@@ -90,33 +120,37 @@ export default async function (inlineQuery, ctx) {
     const registrar = domainData.registrar || 'Active Domain';
     const loc = ipData && ipData.country ? ` (${ipData.country})` : '';
 
+    const domainArticle = {
+      type: 'article',
+      id: `domain_${clean}`,
+      title: `🌐 WHOIS: ${clean}`,
+      description: `Registrar: ${registrar} | IP: ${resolvedIp || 'N/A'}${loc}`,
+      input_message_content: {
+        message_text: card,
+        parse_mode: 'HTML',
+        disable_web_page_preview: true,
+      },
+      reply_markup: {
+        inline_keyboard: [
+          [
+            { text: '⚡️ Ping Check', callback_data: `wping_${clean}` },
+            { text: '🔍 New Lookup', switch_inline_query_current_chat: '' },
+          ],
+          [
+            { text: '🏠 Main Menu', url: 'https://t.me/HostLookupBot?start=main' },
+            { text: '🔗 Check-Host Report ↗️', url: `https://check-host.net/check-report?host=${encodeURIComponent(clean)}` },
+          ],
+        ],
+      },
+    };
+
+    const pingArticle = createPingArticle(clean, ipData);
+    const results = isPingIntent ? [pingArticle, domainArticle] : [domainArticle, pingArticle];
+
     return api.answerInlineQuery({
       inline_query_id: queryId,
-      results: [
-        {
-          type: 'article',
-          id: `domain_${clean}`,
-          title: `🌐 WHOIS: ${clean}`,
-          description: `Registrar: ${registrar} | IP: ${resolvedIp || 'N/A'}${loc}`,
-          input_message_content: {
-            message_text: card,
-            parse_mode: 'HTML',
-            disable_web_page_preview: true,
-          },
-          reply_markup: {
-            inline_keyboard: [
-              [
-                { text: '🔍 New Lookup', switch_inline_query_current_chat: '' },
-                { text: '🏠 Main Menu', url: 'https://t.me/HostLookupBot?start=main' },
-              ],
-              [
-                { text: '🔗 Check-Host Report ↗️', url: `https://check-host.net/check-report?host=${encodeURIComponent(clean)}` },
-              ],
-            ],
-          },
-        },
-      ],
-      cache_time: 60,
+      results,
+      cache_time: 30,
     });
   }
 

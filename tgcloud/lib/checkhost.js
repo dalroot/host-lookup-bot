@@ -362,8 +362,8 @@ export function formatMultiPingCard(target, pingResult, ipData = null, lang = 'e
   }
 
   text += isFa
-    ? `<i>💡 [✓ ✓ ✓ ✓] شامل ۴ پروب ICMP | تست مجدد: <code>/ping ${cleanEscaped}</code></i>`
-    : `<i>💡 [✓ ✓ ✓ ✓] denotes 4 ICMP probe | /ping again: <code>/ping ${cleanEscaped}</code></i>`;
+    ? `<i>💡 [✓ ✓ ✓ ✓] شامل ۴ پروب ICMP | <a href="tg://resolve?domain=HostLookupBot&amp;query=ping%20${cleanEscaped}">⚡️ استعلام اینلاین</a> | <code>/ping ${cleanEscaped}</code></i>`
+    : `<i>💡 [✓ ✓ ✓ ✓] denotes 4 ICMP probe | <a href="tg://resolve?domain=HostLookupBot&amp;query=ping%20${cleanEscaped}">⚡️ Inline Ping</a> | <code>/ping ${cleanEscaped}</code></i>`;
 
   return text;
 }

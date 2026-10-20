@@ -689,16 +689,19 @@ export default async function (message, ctx) {
 
       const keyboard = [
         [
-          { text: isFa ? '📖 نمایش باز (عادی)' : '📖 Normal View', callback_data: `wping_norm_${target}` },
+          { text: isFa ? '⚡️ استعلام اینلاین' : '⚡️ Inline Ping', switch_inline_query_current_chat: `ping ${target}` },
           { text: isFa ? '🔄 تست مجدد' : '🔄 Re-Ping', callback_data: `wping_${target}` },
         ],
         [
+          { text: isFa ? '📖 نمایش باز (عادی)' : '📖 Normal View', callback_data: `wping_norm_${target}` },
           { text: isFa ? '📋 جزئیات هویز' : '📋 WHOIS Details', callback_data: `wboth_${target}` },
+        ],
+        [
           { text: isFa ? '📡 رکوردهای DNS' : '📡 DNS Records', callback_data: `wdns_${target}` },
+          { text: '🔗 Check-Host Web Report ↗️', url: `https://check-host.net/check-report?host=${encodeURIComponent(target)}` },
         ],
         [
           { text: isFa ? '🔍 استعلام جدید' : '🔍 New Lookup', switch_inline_query_current_chat: '' },
-          { text: '🔗 Check-Host Web Report ↗️', url: `https://check-host.net/check-report?host=${encodeURIComponent(target)}` },
         ],
       ];
 
