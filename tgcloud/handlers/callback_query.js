@@ -574,8 +574,8 @@ export default async function (query, ctx) {
   // 3. MULTI-NODE PING CHECK (GLOBAL + IRAN)
   // ==========================================
   if (data.startsWith('wping_')) {
-    const isExpandable = data.startsWith('wping_exp_');
-    const target = cleanHost(data.replace(/^wping_(?:exp_)?/, ''));
+    const isExpandable = !data.startsWith('wping_norm_');
+    const target = cleanHost(data.replace(/^wping_(?:norm_|exp_)?/, ''));
     const userLang = await getUserLang(db, fromUserId);
     const isFa = userLang === 'fa';
 
@@ -610,13 +610,13 @@ export default async function (query, ctx) {
       const card = formatMultiPingCard(target, pingResult, ipData, userLang, { expandable: isExpandable });
 
       const toggleBtn = isExpandable
-        ? { text: isFa ? '📖 نمایش باز (عادی)' : '📖 Normal View', callback_data: `wping_${target}` }
-        : { text: isFa ? '📂 نمایش کلاپس (Quote)' : '📂 Collapse View (Quote)', callback_data: `wping_exp_${target}` };
+        ? { text: isFa ? '📖 نمایش باز (عادی)' : '📖 Normal View', callback_data: `wping_norm_${target}` }
+        : { text: isFa ? '📂 نمایش کلاپس (Quote)' : '📂 Collapse View (Quote)', callback_data: `wping_${target}` };
 
       const keyboard = [
         [
           toggleBtn,
-          { text: isFa ? '🔄 تست مجدد' : '🔄 Re-Ping', callback_data: isExpandable ? `wping_exp_${target}` : `wping_${target}` },
+          { text: isFa ? '🔄 تست مجدد' : '🔄 Re-Ping', callback_data: isExpandable ? `wping_${target}` : `wping_norm_${target}` },
         ],
         [
           { text: isFa ? '📋 جزئیات هویز' : '📋 WHOIS Details', callback_data: `wboth_${target}` },

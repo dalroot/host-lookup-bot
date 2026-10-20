@@ -354,15 +354,16 @@ export function formatMultiPingCard(target, pingResult, ipData = null, lang = 'e
 
   const pingBlock = lines.join('\n');
 
-  if (options.expandable) {
+  const isExpandable = options.expandable !== false;
+  if (isExpandable) {
     text += `<blockquote expandable>${pingBlock}</blockquote>\n\n`;
   } else {
     text += `${pingBlock}\n\n`;
   }
 
   text += isFa
-    ? `<i>💡 [✓ ✓ ✓ ✓] نشان‌دهنده ۴ بسته ارسالی ICMP و زمان پاسخ‌دهی به میلی‌ثانیه است.</i>`
-    : `<i>💡 [✓ ✓ ✓ ✓] denotes 4 ICMP probe packets & round-trip latency in ms.</i>`;
+    ? `<i>💡 [✓ ✓ ✓ ✓] شامل ۴ پروب ICMP | تست مجدد: <code>/ping ${cleanEscaped}</code></i>`
+    : `<i>💡 [✓ ✓ ✓ ✓] denotes 4 ICMP probe | /ping again: <code>/ping ${cleanEscaped}</code></i>`;
 
   return text;
 }

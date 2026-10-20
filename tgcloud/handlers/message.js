@@ -685,11 +685,11 @@ export default async function (message, ctx) {
         runMultiPingCheck(target),
       ]);
 
-      const card = formatMultiPingCard(target, pingResult, ipData, userLang, { expandable: false });
+      const card = formatMultiPingCard(target, pingResult, ipData, userLang, { expandable: true });
 
       const keyboard = [
         [
-          { text: isFa ? '📂 نمایش کلاپس (Quote)' : '📂 Collapse View (Quote)', callback_data: `wping_exp_${target}` },
+          { text: isFa ? '📖 نمایش باز (عادی)' : '📖 Normal View', callback_data: `wping_norm_${target}` },
           { text: isFa ? '🔄 تست مجدد' : '🔄 Re-Ping', callback_data: `wping_${target}` },
         ],
         [
