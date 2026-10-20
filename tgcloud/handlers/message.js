@@ -529,18 +529,23 @@ export default async function (message, ctx) {
 
   // 4.1. Bare /whois Command
   if (rawText === '/whois') {
+    const userLang = await getUserLang(db, fromUser?.id);
+    const isFa = userLang === 'fa';
     return api.sendMessage({
       chat_id: chatId,
-      text:
-        `<blockquote>🌐 <b>WHOIS & Host Lookup</b></blockquote>\n\n` +
-        `Please send any Domain or IP address to inspect (e.g. <code>google.com</code> or <code>1.1.1.1</code>):\n\n` +
-        `<i>Or click the button below:</i>`,
+      text: isFa
+        ? `<blockquote>🌐 <b>استعلام هویز دامنه و آی‌پی (WHOIS Lookup)</b></blockquote>\n\n` +
+          `لطفاً نام دامنه یا آی‌پی مورد نظر را وارد نمایید (مثال: <code>google.com</code> یا <code>1.1.1.1</code>):\n\n` +
+          `<i>یا دکمه زیر را لمس کنید تا در حالت اینلاین جستجو کنید:</i>`
+        : `<blockquote>🌐 <b>WHOIS & Host Lookup</b></blockquote>\n\n` +
+          `Please provide any Domain or IP address to inspect (e.g. <code>google.com</code> or <code>1.1.1.1</code>):\n\n` +
+          `<i>Or click the button below to search inline:</i>`,
       parse_mode: 'HTML',
       ...replyParams,
       reply_markup: {
         inline_keyboard: [
-          [{ text: '🔍 Instant Inline Search', switch_inline_query_current_chat: '' }],
-          [{ text: '🏠 Main Menu', callback_data: 'menu_main' }],
+          [{ text: isFa ? '🔍 تایپ و استعلام اینلاین' : '🔍 Type & Search Inline', switch_inline_query_current_chat: '' }],
+          [{ text: isFa ? '🏠 منوی اصلی' : '🏠 Main Menu', callback_data: 'menu_main' }],
         ],
       },
     });
@@ -549,19 +554,25 @@ export default async function (message, ctx) {
   // 5. DNS Specific Command: /dns <domain>
   if (rawText.startsWith('/dns') || rawText.startsWith('/records')) {
     const domainArg = cleanRawInput(rawText.replace(/^\/(?:dns|records)(?:@[a-zA-Z0-9_]+)?\s*/i, ''));
+    const userLang = await getUserLang(db, fromUser?.id);
+    const isFa = userLang === 'fa';
+
     if (!domainArg || !isDomain(domainArg)) {
       return api.sendMessage({
         chat_id: chatId,
-        text:
-          `<blockquote>📡 <b>DNS Records Query</b></blockquote>\n\n` +
-          `Please provide a valid domain to resolve DNS records (e.g. <code>google.com</code> or <code>cloudflare.com</code>):\n\n` +
-          `<i>Or click the button below:</i>`,
+        text: isFa
+          ? `<blockquote>📡 <b>استعلام رکوردهای DNS</b></blockquote>\n\n` +
+            `لطفاً نام دامنه مورد نظر را وارد نمایید (مثال: <code>google.com</code> یا <code>cloudflare.com</code>):\n\n` +
+            `<i>یا دکمه زیر را لمس کنید:</i>`
+          : `<blockquote>📡 <b>DNS Records Query</b></blockquote>\n\n` +
+            `Please provide a valid domain to resolve DNS records (e.g. <code>google.com</code> or <code>cloudflare.com</code>):\n\n` +
+            `<i>Or click the button below:</i>`,
         parse_mode: 'HTML',
         ...replyParams,
         reply_markup: {
           inline_keyboard: [
-            [{ text: '🔍 Instant Inline Search', switch_inline_query_current_chat: '' }],
-            [{ text: '🏠 Main Menu', callback_data: 'menu_main' }],
+            [{ text: isFa ? '📡 استعلام اینلاین DNS' : '📡 Search DNS Inline', switch_inline_query_current_chat: '' }],
+            [{ text: isFa ? '🏠 منوی اصلی' : '🏠 Main Menu', callback_data: 'menu_main' }],
           ],
         },
       });
@@ -599,19 +610,25 @@ export default async function (message, ctx) {
   // 6. IP Specific Command: /ip <address>
   if (rawText.startsWith('/ip')) {
     const ipArg = cleanRawInput(rawText.replace(/^\/ip(?:@[a-zA-Z0-9_]+)?\s*/i, ''));
+    const userLang = await getUserLang(db, fromUser?.id);
+    const isFa = userLang === 'fa';
+
     if (!ipArg || !isIpAddress(ipArg)) {
       return api.sendMessage({
         chat_id: chatId,
-        text:
-          `<blockquote>🖥️ <b>Server & IP Intelligence</b></blockquote>\n\n` +
-          `Please provide a valid IP address to inspect (e.g. <code>1.1.1.1</code> or <code>8.8.8.8</code>):\n\n` +
-          `<i>Or click the button below:</i>`,
+        text: isFa
+          ? `<blockquote>🖥️ <b>اطلاعات آی‌پی و سرور (IP Intelligence)</b></blockquote>\n\n` +
+            `لطفاً یک آدرس IP معتبر وارد نمایید (مثال: <code>1.1.1.1</code> یا <code>8.8.8.8</code>):\n\n` +
+            `<i>یا دکمه زیر را لمس کنید:</i>`
+          : `<blockquote>🖥️ <b>Server & IP Intelligence</b></blockquote>\n\n` +
+            `Please provide a valid IP address to inspect (e.g. <code>1.1.1.1</code> or <code>8.8.8.8</code>):\n\n` +
+            `<i>Or click the button below:</i>`,
         parse_mode: 'HTML',
         ...replyParams,
         reply_markup: {
           inline_keyboard: [
-            [{ text: '🔍 Instant Inline Search', switch_inline_query_current_chat: '' }],
-            [{ text: '🏠 Main Menu', callback_data: 'menu_main' }],
+            [{ text: isFa ? '🖥️ استعلام اینلاین IP' : '🖥️ Search IP Inline', switch_inline_query_current_chat: '' }],
+            [{ text: isFa ? '🏠 منوی اصلی' : '🏠 Main Menu', callback_data: 'menu_main' }],
           ],
         },
       });
@@ -656,16 +673,16 @@ export default async function (message, ctx) {
         chat_id: chatId,
         text: isFa
           ? `<blockquote>📡 <b>تست پینگ چندنقطه‌ای (Multi-Node Ping)</b></blockquote>\n\n` +
-            `لطفاً نام دامنه یا آی‌پی مورد نظر را وارد نمایید (مثال: <code>google.com</code> یا <code>1.1.1.1</code>):\n\n` +
-            `<i>یا دستور را به این شکل بفرستید: <code>/ping google.com</code> یا <code>check! 8.8.8.8</code></i>`
+            `برای شروع سنجش تاخیر، دکمه زیر را بزنید یا تارگت مورد نظرتان را وارد نمایید:\n\n` +
+            `<i>مثال: <code>/ping google.com</code> یا <code>check! 8.8.8.8</code></i>`
           : `<blockquote>📡 <b>Multi-Node Ping & Latency Matrix</b></blockquote>\n\n` +
-            `Please provide a domain or IP address to ping (e.g. <code>google.com</code> or <code>1.1.1.1</code>):\n\n` +
+            `To measure latency, tap the button below or specify a target domain/IP:\n\n` +
             `<i>Example: <code>/ping 1.1.1.1</code> or <code>check! 8.8.8.8</code></i>`,
         parse_mode: 'HTML',
         ...replyParams,
         reply_markup: {
           inline_keyboard: [
-            [{ text: isFa ? '🔍 استعلام سریع اینلاین' : '🔍 Instant Inline Search', switch_inline_query_current_chat: '' }],
+            [{ text: isFa ? '⚡️ تایپ اینلاین برای پینگ' : '⚡️ Type Target Inline (Ping)', switch_inline_query_current_chat: 'ping ' }],
             [{ text: isFa ? '🏠 منوی اصلی' : '🏠 Main Menu', callback_data: 'menu_main' }],
           ],
         },
