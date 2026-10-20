@@ -14,7 +14,11 @@ import {
   formatWelcomeCard,
   escapeHtml,
 } from '../lib/whois.js';
-import { checkLiveness } from '../lib/checkhost.js';
+import {
+  checkLiveness,
+  runMultiPingCheck,
+  formatMultiPingCard,
+} from '../lib/checkhost.js';
 import {
   checkAllChannels,
   formatJoinPrompt,
@@ -567,74 +571,70 @@ export default async function (query, ctx) {
   }
 
   // ==========================================
-  // 3. PING / LIVENESS CHECK (GERMANY NODE)
+  // 3. MULTI-NODE PING CHECK (GLOBAL + IRAN)
   // ==========================================
   if (data.startsWith('wping_')) {
     const target = cleanHost(data.replace('wping_', ''));
-    const liveness = await checkLiveness(target);
-
-    const toast = liveness
-      ? (liveness.online ? `🟢 Online: ${liveness.ms} ms (Frankfurt)` : `🔴 Unreachable / Packet Loss`)
-      : `⚠️ Ping check failed / timeout`;
+    const userLang = await getUserLang(db, fromUserId);
+    const isFa = userLang === 'fa';
 
     api.answerCallbackQuery({
       callback_query_id: query.id,
-      text: toast,
+      text: isFa ? '⏳ در حال سنجش پینگ از ۱۸ نقطه دنیا...' : '⏳ Measuring latency across 18 nodes...',
       show_alert: false,
     }).catch(() => {});
 
+    // Show loading state in-place
     try {
+      await api.editMessageText({
+        chat_id: chatId,
+        message_id: messageId,
+        text: isFa
+          ? `<blockquote>📡 <b>تست پینگ چندنقطه‌ای و لایونس (Multi-Node Ping)</b></blockquote>\n\n` +
+            `⏳ <i>در حال ارسال پکت‌های پینگ و سنجش تاخیر از ۱۸ نقطه جهان و استان‌های ایران برای</i> <code>${escapeHtml(target)}</code><i>...\n(لطفاً چند ثانیه صبر کنید)</i>`
+          : `<blockquote>📡 <b>Multi-Node Ping & Latency Matrix</b></blockquote>\n\n` +
+            `⏳ <i>Measuring ICMP latency across 18 global & Iran provincial nodes for</i> <code>${escapeHtml(target)}</code><i>...\n(please wait ~3.5 seconds)</i>`,
+        parse_mode: 'HTML',
+      });
+    } catch {}
+
+    try {
+      let ipData = null;
       if (isIpAddress(target)) {
-        const ipData = await lookupIp(target);
-        const card = formatIpCard(ipData, liveness);
-        const keyboard = [
-          [
-            { text: '⚡️ Re-Ping', callback_data: `wping_${target}` },
-            { text: '🔄 Refresh', callback_data: `wip_${target}` },
-          ],
-          [
-            { text: '🔗 Check-Host Report ↗️', url: `https://check-host.net/ip-info?host=${encodeURIComponent(target)}` },
-          ],
-          ...backButton,
-        ];
-        return await api.editMessageText({
-          chat_id: chatId,
-          message_id: messageId,
-          text: card,
-          parse_mode: 'HTML',
-          disable_web_page_preview: true,
-          reply_markup: { inline_keyboard: keyboard },
-        });
+        ipData = await lookupIp(target);
       } else {
-        const [domainData, resolvedIp] = await Promise.all([
-          lookupDomain(target),
-          resolveDomainIp(target),
-        ]);
-        let ipData = null;
-        if (resolvedIp) ipData = await lookupIp(resolvedIp);
-        const card = formatUnifiedCard(target, domainData, ipData, resolvedIp, liveness);
-        const keyboard = [
-          [
-            { text: '⚡️ Re-Ping', callback_data: `wping_${target}` },
-            { text: '📡 DNS Records', callback_data: `wdns_${target}` },
-          ],
-          [
-            { text: '🔄 Refresh', callback_data: `wboth_${target}` },
-            { text: '🔗 Check-Host Report ↗️', url: `https://check-host.net/check-report?host=${encodeURIComponent(target)}` },
-          ],
-          ...backButton,
-        ];
-        return await api.editMessageText({
-          chat_id: chatId,
-          message_id: messageId,
-          text: card,
-          parse_mode: 'HTML',
-          disable_web_page_preview: true,
-          reply_markup: { inline_keyboard: keyboard },
-        });
+        const resolved = await resolveDomainIp(target);
+        if (resolved) ipData = await lookupIp(resolved);
       }
+
+      const pingResult = await runMultiPingCheck(target);
+      const card = formatMultiPingCard(target, pingResult, ipData, userLang);
+
+      const keyboard = [
+        [
+          { text: isFa ? '🔄 تست مجدد (Re-Ping)' : '🔄 Re-Ping', callback_data: `wping_${target}` },
+          { text: isFa ? '📋 جزئیات هویز' : '📋 WHOIS Details', callback_data: `wboth_${target}` },
+        ],
+        [
+          { text: isFa ? '📡 رکوردهای DNS' : '📡 DNS Records', callback_data: `wdns_${target}` },
+          { text: isFa ? '🔍 استعلام جدید' : '🔍 New Lookup', switch_inline_query_current_chat: '' },
+        ],
+        [
+          { text: isFa ? '🏠 منوی اصلی' : '🏠 Main Menu', callback_data: 'menu_main' },
+          { text: '🔗 Check-Host Web Report ↗️', url: `https://check-host.net/check-report?host=${encodeURIComponent(target)}` },
+        ],
+      ];
+
+      return await api.editMessageText({
+        chat_id: chatId,
+        message_id: messageId,
+        text: card,
+        parse_mode: 'HTML',
+        disable_web_page_preview: true,
+        reply_markup: { inline_keyboard: keyboard },
+      });
     } catch (err) {
-      console.error('Error updating ping card:', err);
+      console.error('Error updating multi-ping card:', err);
     }
     return;
   }

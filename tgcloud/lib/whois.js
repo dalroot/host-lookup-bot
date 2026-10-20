@@ -408,6 +408,7 @@ export function formatWelcomeCard(lang = 'en') {
       `• <code>/whois &lt;هدف&gt;</code> — استعلام جامع هویز، وضعیت و سرور\n` +
       `• <code>/ip &lt;آدرس&gt;</code> — مشخصات لوکیشن، دیتاسنتر و ASN\n` +
       `• <code>/dns &lt;دامنه&gt;</code> — استعلام تمام رکوردهای DNS (A, AAAA, MX, NS...)\n` +
+      `• <code>/ping &lt;هدف&gt;</code> — تست پینگ چندنقطه‌ای جهانی و استانی ایران\n` +
       `• <code>/language</code> — تغییر زبان ربات (English / فارسی)\n` +
       `• <code>/help</code> — راهنمای کامل استفاده\n\n` +
       `<i>⚡️ قدرت‌گرفته از پروتکل RDAP، سرور 1.1.1.1 کلودفلر و معماری سرورلس تلگرام</i>`
@@ -426,6 +427,7 @@ export function formatWelcomeCard(lang = 'en') {
     `• <code>/whois &lt;target&gt;</code> — Comprehensive WHOIS & server card\n` +
     `• <code>/ip &lt;address&gt;</code> — Geolocation, ASN, and hosting details\n` +
     `• <code>/dns &lt;domain&gt;</code> — Query all DNS records (A, AAAA, MX, NS, TXT)\n` +
+    `• <code>/ping &lt;target&gt;</code> — Multi-node global & Iran latency matrix\n` +
     `• <code>/language</code> — Change language (English / فارسی)\n` +
     `• <code>/help</code> — Complete user manual & instructions\n\n` +
     `<i>⚡️ Powered by RDAP, Cloudflare 1.1.1.1 DoH & Telegram V8 Serverless</i>`

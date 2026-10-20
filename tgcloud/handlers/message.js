@@ -30,6 +30,10 @@ import {
   setUserLang,
   getLanguageCard,
 } from '../lib/i18n.js';
+import {
+  runMultiPingCheck,
+  formatMultiPingCard,
+} from '../lib/checkhost.js';
 
 export const ADMIN_ID = 8629398713;
 
@@ -456,6 +460,7 @@ export default async function (message, ctx) {
       { command: 'whois', description: '🌐 Domain & IP WHOIS lookup' },
       { command: 'ip', description: '🖥️ IP intelligence, ASN & datacenter' },
       { command: 'dns', description: '📡 Query DNS records (A, AAAA, MX, NS...)' },
+      { command: 'ping', description: '⚡ Multi-node global & Iran latency matrix' },
       { command: 'language', description: '🌐 Change language / تغییر زبان' },
       { command: 'help', description: 'ℹ️ Complete user manual & instructions' },
     ];
@@ -464,6 +469,7 @@ export default async function (message, ctx) {
       { command: 'whois', description: '🌐 استعلام هویز دامنه و آی‌پی' },
       { command: 'ip', description: '🖥️ اطلاعات آی‌پی، لوکیشن و دیتاسنتر' },
       { command: 'dns', description: '📡 استعلام رکوردهای DNS' },
+      { command: 'ping', description: '⚡ تست پینگ چندنقطه‌ای جهانی و استانی' },
       { command: 'language', description: '🌐 تنظیم زبان / Change Language' },
       { command: 'help', description: 'ℹ️ راهنمای کامل استفاده' },
     ];
@@ -472,6 +478,7 @@ export default async function (message, ctx) {
       { command: 'admin', description: '⚙️ Open Admin Dashboard' },
       { command: 'channels', description: '📢 Manage Force-Join Channels' },
       { command: 'users', description: '👥 View registered users' },
+      { command: 'ping', description: '⚡ Multi-node ping matrix' },
       { command: 'language', description: '🌐 Change language' },
       { command: 'help', description: 'ℹ️ Help & manual' },
     ];
@@ -626,6 +633,93 @@ export default async function (message, ctx) {
       ...replyParams,
       reply_markup: { inline_keyboard: keyboard },
     });
+  }
+
+  // 6.5. Multi-Node Ping Command: /ping <target>
+  if (rawText.startsWith('/ping')) {
+    const targetArg = cleanRawInput(rawText.replace(/^\/ping(?:@[a-zA-Z0-9_]+)?\s*/i, ''));
+    const userLang = await getUserLang(db, fromUser?.id);
+    const isFa = userLang === 'fa';
+
+    if (!targetArg) {
+      return api.sendMessage({
+        chat_id: chatId,
+        text: isFa
+          ? `<blockquote>📡 <b>تست پینگ چندنقطه‌ای (Multi-Node Ping)</b></blockquote>\n\n` +
+            `لطفاً نام دامنه یا آی‌پی مورد نظر را وارد نمایید (مثال: <code>google.com</code> یا <code>1.1.1.1</code>):\n\n` +
+            `<i>یا دستور را به این شکل بفرستید: <code>/ping google.com</code></i>`
+          : `<blockquote>📡 <b>Multi-Node Ping & Latency Matrix</b></blockquote>\n\n` +
+            `Please provide a domain or IP address to ping (e.g. <code>google.com</code> or <code>1.1.1.1</code>):\n\n` +
+            `<i>Example: <code>/ping 1.1.1.1</code></i>`,
+        parse_mode: 'HTML',
+        ...replyParams,
+        reply_markup: {
+          inline_keyboard: [
+            [{ text: isFa ? '🔍 استعلام سریع اینلاین' : '🔍 Instant Inline Search', switch_inline_query_current_chat: '' }],
+            [{ text: isFa ? '🏠 منوی اصلی' : '🏠 Main Menu', callback_data: 'menu_main' }],
+          ],
+        },
+      });
+    }
+
+    const target = cleanHost(targetArg);
+
+    const loadingMsg = await api.sendMessage({
+      chat_id: chatId,
+      text: isFa
+        ? `⏳ <i>در حال ارسال پکت‌های پینگ و سنجش تاخیر از ۱۸ نقطه جهان و استان‌های ایران برای</i> <code>${escapeHtml(target)}</code><i>...\n(لطفاً چند ثانیه صبر کنید)</i>`
+        : `⏳ <i>Measuring ICMP latency across 18 global & Iran provincial nodes for</i> <code>${escapeHtml(target)}</code><i>...\n(please wait ~3.5 seconds)</i>`,
+      parse_mode: 'HTML',
+      ...replyParams,
+    });
+
+    let ipData = null;
+    if (isIpAddress(target)) {
+      ipData = await lookupIp(target);
+    } else {
+      const resolved = await resolveDomainIp(target);
+      if (resolved) {
+        ipData = await lookupIp(resolved);
+      }
+    }
+
+    const pingResult = await runMultiPingCheck(target);
+    const card = formatMultiPingCard(target, pingResult, ipData, userLang);
+
+    const keyboard = [
+      [
+        { text: isFa ? '🔄 تست مجدد (Re-Ping)' : '🔄 Re-Ping', callback_data: `wping_${target}` },
+        { text: isFa ? '📋 جزئیات هویز' : '📋 WHOIS Details', callback_data: `wboth_${target}` },
+      ],
+      [
+        { text: isFa ? '📡 رکوردهای DNS' : '📡 DNS Records', callback_data: `wdns_${target}` },
+        { text: isFa ? '🔍 استعلام جدید' : '🔍 New Lookup', switch_inline_query_current_chat: '' },
+      ],
+      [
+        { text: isFa ? '🏠 منوی اصلی' : '🏠 Main Menu', callback_data: 'menu_main' },
+        { text: '🔗 Check-Host Web Report ↗️', url: `https://check-host.net/check-report?host=${encodeURIComponent(target)}` },
+      ],
+    ];
+
+    if (loadingMsg && loadingMsg.message_id) {
+      return api.editMessageText({
+        chat_id: chatId,
+        message_id: loadingMsg.message_id,
+        text: card,
+        parse_mode: 'HTML',
+        disable_web_page_preview: true,
+        reply_markup: { inline_keyboard: keyboard },
+      });
+    } else {
+      return api.sendMessage({
+        chat_id: chatId,
+        text: card,
+        parse_mode: 'HTML',
+        disable_web_page_preview: true,
+        ...replyParams,
+        reply_markup: { inline_keyboard: keyboard },
+      });
+    }
   }
 
   // 7. Group Filter

@@ -33,6 +33,11 @@ Built on Telegram's native serverless platform (**Telegram Cloud Apps**) — run
   - Full DNS record inspection: `A`, `AAAA`, `MX`, `NS`, `TXT`, `CNAME`.
   - Powered by Cloudflare's privacy-focused 1.1.1.1 DNS over HTTPS.
 
+- **⚡️ Multi-Node Ping & Latency Matrix (Check-Host API):**
+  - Instant ICMP ping and liveness check from 18 global and Iranian provincial nodes (Tehran, Esfahan, Shiraz, Qom, Germany, USA, Switzerland, UK, Turkey, etc.).
+  - Detailed 4-packet status breakdown `[✓ ✓ ✓ ✓]` or `[✓ ✘ ✓ ✓]` and latency in milliseconds.
+  - Essential diagnostic tool for detecting clean vs blocked/dirty IPs and national intranet filtering.
+
 - **⚡️ Telegram Inline Query Support:**
   - Type `@HostLookupBot domain.com` or `@HostLookupBot 1.1.1.1` in **any** Telegram chat or group for instant, shareable preview cards without adding the bot!
 
@@ -74,6 +79,7 @@ Built on Telegram's native serverless platform (**Telegram Cloud Apps**) — run
 | **`/whois <target>`** | Comprehensive WHOIS & hosting card | `/whois github.com` |
 | **`/dns <domain>`** | Query all DNS records (`A`, `AAAA`, `MX`, `NS`, `TXT`) | `/dns cloudflare.com` |
 | **`/ip <address>`** | Inspect IP geolocation, ASN & hosting provider | `/ip 1.1.1.1` |
+| **`/ping <target>`** | Multi-node ping matrix (Global & Iran provincial) | `/ping 1.1.1.1` |
 | **`/language`** | Change interface language (English 🇬🇧 / فارسی 🇮🇷) | `/language` |
 | **`/help`** | Complete user manual & instructions | `/help` |
 | **Direct Send** | Send any domain or IP directly in private chat | `google.com` or `8.8.8.8` |
@@ -173,6 +179,7 @@ See the full [LICENSE](LICENSE) file for complete details.
 • **هویز کامل دامنه:** اطلاعات ثبت‌کننده، تاریخ ثبت و انقضا، وضعیت و نیم‌سرورها (پشتیبانی کامل از دامنه‌های بین‌المللی و ایرانی `.ir`).  
 • **اطلاعات سرور و IP:** موقعیت جغرافیایی، نام دیتاسنتر و هاستینگ، شماره خودمختار (ASN) و Reverse DNS.  
 • **رکوردهای دی‌ان‌اس:** استعلام زنده رکوردهای A، AAAA، MX، NS و TXT از طریق سرورهای Cloudflare DoH.  
+• **تست پینگ چندنقطه‌ای (Multi-Node Ping):** سنجش زنده لایونس، تاخیر و پکت‌های ICMP از ۱۸ نود جهانی و مراکز استان‌های ایران (تهران، اصفهان، شیراز، قم) جهت تشخیص سرورهای ملی، اینترانت و آی‌پی‌های تمیز/فیلترشده.  
 • **حالت اینلاین (Inline):** استفاده مستقیم در تمامی گروه‌ها و چت‌ها با تایپ `@HostLookupBot`.  
 • **سیستم جوین اجباری داینامیک:** امکان افزودن نامحدود کانال با فوروارد پیام و بررسی زنده عضویت کاربران.  
 • **معماری ۱۰۰٪ سرورلس:** بدون نیاز به سرور اختصاصی (VPS) یا داون‌تایم، با اجرای پایدار در ایزوله‌های V8 تلگرام.
