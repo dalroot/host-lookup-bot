@@ -206,17 +206,38 @@ export const MULTI_PING_NODES = [
  */
 export async function runMultiPingCheck(host) {
   try {
-    const clean = String(host || '').trim().replace(/^(?:https?:\/\/)/i, '').split('/')[0].split(':')[0];
+    let clean = String(host || '').trim().replace(/^(?:https?:\/\/)/i, '').split('/')[0].split(':')[0];
     if (!clean) return { error: 'Invalid target host' };
 
     const nodeParams = MULTI_PING_NODES.map(n => `node=${encodeURIComponent(n.id)}`).join('&');
-    const initUrl = `${BASE_URL}/check-ping?host=${encodeURIComponent(clean)}&${nodeParams}`;
+    let initUrl = `${BASE_URL}/check-ping?host=${encodeURIComponent(clean)}&${nodeParams}`;
 
-    const res = await fetch(initUrl, { headers: { 'Accept': 'application/json' } });
+    let res = await fetch(initUrl, { headers: { 'Accept': 'application/json' } });
     if (!res.ok) return { error: `Check-Host API error (${res.status})` };
-    const initData = await res.json();
+    let initData = await res.json();
+    let fallbackTarget = null;
+
+    // Handle Check-Host rate limit / target cooldown
+    if (initData.error === 'limit_exceeded') {
+      // Smart fallback for heavily-queried 1.1.1.1 -> 1.0.0.1
+      if (clean === '1.1.1.1') {
+        fallbackTarget = '1.0.0.1';
+        initUrl = `${BASE_URL}/check-ping?host=${encodeURIComponent(fallbackTarget)}&${nodeParams}`;
+        res = await fetch(initUrl, { headers: { 'Accept': 'application/json' } });
+        if (res.ok) {
+          initData = await res.json();
+        }
+      }
+    }
+
+    if (!initData.ok || !initData.request_id) {
+      if (initData.error === 'limit_exceeded') {
+        return { error: 'limit_exceeded', host: clean };
+      }
+      return { error: initData.error || 'Failed to obtain Check-Host request ID', host: clean };
+    }
+
     const reqId = initData.request_id;
-    if (!reqId) return { error: 'Failed to obtain Check-Host request ID' };
 
     // Wait 3.5 seconds for ICMP ping probes to complete across nodes
     await new Promise(r => setTimeout(r, 3500));
@@ -224,10 +245,10 @@ export async function runMultiPingCheck(host) {
     const pollRes = await fetch(`${BASE_URL}/check-result/${reqId}`, {
       headers: { 'Accept': 'application/json' },
     });
-    if (!pollRes.ok) return { error: `Failed to retrieve ping results (${pollRes.status})` };
+    if (!pollRes.ok) return { error: `Failed to retrieve ping results (${pollRes.status})`, host: clean };
     const results = await pollRes.json();
 
-    return { ok: true, host: clean, reqId, results };
+    return { ok: true, host: clean, fallbackTarget, reqId, results };
   } catch (err) {
     return { error: err.message || 'Unknown network error' };
   }
@@ -272,8 +293,20 @@ export function formatMultiPingCard(target, pingResult, ipData = null, lang = 'e
 
   text += `\n`;
 
+  if (pingResult?.fallbackTarget) {
+    text += isFa
+      ? `💡 <i>تارگت <code>${cleanEscaped}</code> در کول‌داون سرور Check-Host بود؛ پینگ روی آی‌پی معادل (<code>${pingResult.fallbackTarget}</code>) انجام شد:</i>\n\n`
+      : `💡 <i>Target <code>${cleanEscaped}</code> was on Check-Host cooldown; probed Anycast sibling (<code>${pingResult.fallbackTarget}</code>):</i>\n\n`;
+  }
+
   if (!pingResult || pingResult.error || !pingResult.results) {
-    text += `<blockquote>⚠️ <i>${isFa ? 'خطا در دریافت نتایج پینگ از سرورهای Check-Host.' : 'Failed to retrieve ping results from Check-Host.'}</i></blockquote>`;
+    if (pingResult?.error === 'limit_exceeded') {
+      text += isFa
+        ? `<blockquote>⚠️ <b>محدودیت نرخ استعلام Check-Host برای این هدف</b>\n\nاین هدف در حال حاضر بیش از حد مجاز در سرورهای جهانی تست شده و در کول‌داون موقت (۳۰ ثانیه‌ای) قرار دارد.\n💡 <i>لطفاً چند ثانیه دیگر امتحان کنید یا دامنه/آی‌پی دیگری (مانند <code>8.8.8.8</code> یا <code>google.com</code>) را تست نمایید.</i></blockquote>`
+        : `<blockquote>⚠️ <b>Check-Host Rate Limit Exceeded for this Target</b>\n\nThis target is heavily tested on Check-Host and is on temporary cooldown (~30s).\n💡 <i>Please retry in a moment or test another target (e.g. <code>8.8.8.8</code> or <code>google.com</code>).</i></blockquote>`;
+    } else {
+      text += `<blockquote>⚠️ <i>${isFa ? 'خطا در دریافت نتایج پینگ از سرورهای Check-Host.' : 'Failed to retrieve ping results from Check-Host.'}</i></blockquote>`;
+    }
     return text;
   }
 
