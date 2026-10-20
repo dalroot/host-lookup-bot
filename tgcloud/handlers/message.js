@@ -1,6 +1,4 @@
-import * as allSdk from 'sdk';
-const { api, db } = allSdk;
-console.error('ALL_SDK_EXPORTS:', Object.keys(allSdk));
+import { api, db, fetch } from 'sdk';
 import { sql } from 'sdk/db';
 import { users, fsubChannels } from '../schema.js';
 import {
@@ -72,6 +70,7 @@ export default async function (message, ctx) {
       console.error('Error saving user:', err);
     }
   }
+
 
 
   // ==========================================

@@ -11,17 +11,12 @@ const STANDARD_NODES = [
 ];
 
 /**
- * Safe sleep in V8 isolates without setTimeout
+ * Non-blocking delay in serverless V8 isolate via HTTP hold
  */
-function delay(ms) {
+async function delayAsync(seconds = 2) {
   try {
-    const sab = new SharedArrayBuffer(4);
-    const int32 = new Int32Array(sab);
-    Atomics.wait(int32, 0, 0, ms);
-  } catch {
-    const start = Date.now();
-    while (Date.now() - start < ms) {}
-  }
+    await fetch(`https://httpbin.org/delay/${seconds}`);
+  } catch {}
 }
 
 /**
@@ -37,7 +32,7 @@ export async function checkLiveness(host) {
     const reqId = data.request_id;
     if (!reqId) return null;
 
-    delay(1200);
+    await delayAsync(1);
 
     const pollRes = await fetch(`${BASE_URL}/check-result/${reqId}`, {
       headers: { 'Accept': 'application/json' },
@@ -245,8 +240,8 @@ export async function runMultiPingCheck(host) {
 
     const reqId = initData.request_id;
 
-    // Fast delay for ICMP probes to finish across curated fast nodes
-    delay(1800);
+    // Fast non-blocking delay for ICMP probes to finish across curated fast nodes
+    await delayAsync(2);
 
     const pollRes = await fetch(`${BASE_URL}/check-result/${reqId}`, {
       headers: { 'Accept': 'application/json' },
