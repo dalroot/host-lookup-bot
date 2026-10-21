@@ -397,40 +397,34 @@ export function formatDnsCard(domain, records) {
 export function formatWelcomeCard(lang = 'en') {
   if (lang === 'fa') {
     return (
-      `<blockquote>🔍 <b>ربات هوشمند Host Lookup — استعلام هویز، DNS و اطلاعات سرور</b></blockquote>\n\n` +
-      `سریع، سرورلس، کاملاً رایگان و بدون ردپا در بستر ابری تلگرام.\n\n` +
-      `<b>🚀 روش‌های استفاده:</b>\n` +
-      `• <b>در چت خصوصی:</b> نام دامنه (مانند <code>google.com</code>) یا آی‌پی (مانند <code>1.1.1.1</code>) را مستقیم بفرستید.\n` +
-      `• <b>در گروه‌ها:</b> ربات را منشن کنید: <code>@HostLookupBot domain.com</code>\n` +
-      `• <b>حالت اینلاین (Inline):</b> در هر چتی تایپ کنید <code>@HostLookupBot </code>!\n\n` +
-      `<b>🛠 دستورات ربات:</b>\n` +
-      `• <code>/start</code> — منوی اصلی و معرفی امکانات\n` +
-      `• <code>/whois &lt;هدف&gt;</code> — استعلام جامع هویز، وضعیت و سرور\n` +
-      `• <code>/ip &lt;آدرس&gt;</code> — مشخصات لوکیشن، دیتاسنتر و ASN\n` +
-      `• <code>/dns &lt;دامنه&gt;</code> — استعلام تمام رکوردهای DNS (A, AAAA, MX, NS...)\n` +
-      `• <code>/ping &lt;هدف&gt;</code> — تست پینگ چندنقطه‌ای جهانی و استانی ایران\n` +
-      `• <code>/language</code> — تغییر زبان ربات (English / فارسی)\n` +
-      `• <code>/help</code> — راهنمای کامل استفاده\n\n` +
-      `<i>⚡️ قدرت‌گرفته از پروتکل RDAP، سرور 1.1.1.1 کلودفلر و معماری سرورلس تلگرام</i>`
+      `<blockquote>🔍 <b>استعلام هاست و شبکه | Host Lookup</b></blockquote>\n\n` +
+      `سریع، سرورلس و ابری با دقت بالا.\n\n` +
+      `💡 <i>کافیست یک دامنه یا آی‌پی ارسال کنید:</i>\n` +
+      `<code>google.com</code> • <code>1.1.1.1</code>\n\n` +
+      `⚡️ <i>یا در هر چتی تایپ کنید:</i> <code>@HostLookupBot &lt;هدف&gt;</code>\n\n` +
+      `<blockquote expandable>` +
+      `🛠 <b>دستورات موجود:</b>\n` +
+      `• <code>/ping &lt;هدف&gt;</code> — ماتریس پینگ ۱۸ نقطه‌ای\n` +
+      `• <code>/dns &lt;دامنه&gt;</code> — رکوردهای Cloudflare DoH\n` +
+      `• <code>/whois &lt;هدف&gt;</code> — مشخصات هویز و سرور\n` +
+      `• <code>/language</code> — تغییر زبان ربات` +
+      `</blockquote>`
     );
   }
 
   return (
-    `<blockquote>🔍 <b>Host Lookup — WHOIS, DNS & Server Inspector</b></blockquote>\n\n` +
-    `Fast, serverless, and privacy-first network intelligence bot.\n\n` +
-    `<b>🚀 Quick Usage:</b>\n` +
-    `• <b>In Private Chat:</b> Send any <b>Domain</b> (e.g. <code>google.com</code>) or <b>IP</b> (e.g. <code>1.1.1.1</code>) directly.\n` +
-    `• <b>In Groups:</b> Mention the bot: <code>@HostLookupBot domain.com</code>\n` +
-    `• <b>Inline Mode:</b> Type <code>@HostLookupBot </code> anywhere in Telegram!\n\n` +
-    `<b>🛠 Available Commands:</b>\n` +
-    `• <code>/start</code> — Main menu & bot introduction\n` +
-    `• <code>/whois &lt;target&gt;</code> — Comprehensive WHOIS & server card\n` +
-    `• <code>/ip &lt;address&gt;</code> — Geolocation, ASN, and hosting details\n` +
-    `• <code>/dns &lt;domain&gt;</code> — Query all DNS records (A, AAAA, MX, NS, TXT)\n` +
-    `• <code>/ping &lt;target&gt;</code> — Multi-node global & Iran latency matrix\n` +
-    `• <code>/language</code> — Change language (English / فارسی)\n` +
-    `• <code>/help</code> — Complete user manual & instructions\n\n` +
-    `<i>⚡️ Powered by RDAP, Cloudflare 1.1.1.1 DoH & Telegram V8 Serverless</i>`
+    `<blockquote>🔍 <b>Host Lookup — Network Intelligence</b></blockquote>\n\n` +
+    `Fast, serverless & privacy-first WHOIS, DNS and latency inspector.\n\n` +
+    `💡 <i>Just send any Domain or IP address to inspect:</i>\n` +
+    `<code>google.com</code> • <code>1.1.1.1</code>\n\n` +
+    `⚡️ <i>Or use inline anywhere:</i> <code>@HostLookupBot &lt;host&gt;</code>\n\n` +
+    `<blockquote expandable>` +
+    `🛠 <b>Available Commands:</b>\n` +
+    `• <code>/ping &lt;target&gt;</code> — 18-node global & Iran ping matrix\n` +
+    `• <code>/dns &lt;domain&gt;</code> — Query all DNS records (A, AAAA, MX, NS...)\n` +
+    `• <code>/whois &lt;target&gt;</code> — Comprehensive WHOIS & server details\n` +
+    `• <code>/language</code> — Switch language (English / فارسی)` +
+    `</blockquote>`
   );
 }
 
